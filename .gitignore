@@ -1,0 +1,6 @@
+.idea
+input.txt
+target/*
+encrypted/*
+decrypted/*
+src/main/resources/properties/pkcs11.properties
