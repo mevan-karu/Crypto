@@ -10,9 +10,12 @@ import iaik.pkcs.pkcs11.parameters.InitializationVectorParameters;
 
 public class Cipher {
 
+    public Cipher() {
+    }
+
     public byte[] encryptAES(Session session, byte[] dataToBeEncrypted,
-                                    AESSecretKey encryptionKey, byte[] encryptInitializationVector,
-                                    long encryptingMechanism) throws TokenException {
+                             AESSecretKey encryptionKey, byte[] encryptInitializationVector,
+                             long encryptingMechanism) throws TokenException {
         Mechanism encryptionMechanism = Mechanism.get(encryptingMechanism);
         InitializationVectorParameters encryptInitializationVectorParameters = new InitializationVectorParameters(encryptInitializationVector);
         encryptionMechanism.setParameters(encryptInitializationVectorParameters);
@@ -22,8 +25,8 @@ public class Cipher {
     }
 
     public byte[] decryptAES(Session session, byte[] dataToBeDecrypted,
-                                    AESSecretKey decryptionKey, long decryptingMechanism,
-                                    byte[] decryptionInitializationVector) throws TokenException {
+                             AESSecretKey decryptionKey, long decryptingMechanism,
+                             byte[] decryptionInitializationVector) throws TokenException {
         Mechanism decryptionMechanism = Mechanism.get(decryptingMechanism);
         InitializationVectorParameters decryptInitializationVectorParameters = new InitializationVectorParameters(
                 decryptionInitializationVector);
@@ -35,7 +38,7 @@ public class Cipher {
 
 
     public byte[] encryptRSA(Session session, byte[] dataToBeEncrypted,
-                                    RSAPublicKey encryptionKey, long encryptingMechanism) throws TokenException {
+                             RSAPublicKey encryptionKey, long encryptingMechanism) throws TokenException {
         byte[] encryptedData = null;
         Mechanism encryptionMechanism = Mechanism.get(encryptingMechanism);
         if (encryptionMechanism.isSingleOperationEncryptDecryptMechanism()) {
@@ -46,7 +49,7 @@ public class Cipher {
     }
 
     public byte[] decryptRSA(Session session, byte[] dataToBeDecrypted,
-                                    RSAPrivateKey decryptionKey, long decryptingMechanism) throws TokenException {
+                             RSAPrivateKey decryptionKey, long decryptingMechanism) throws TokenException {
         byte[] decryptedData = null;
         Mechanism decryptionMechanism = Mechanism.get(decryptingMechanism);
         if (decryptionMechanism.isSingleOperationEncryptDecryptMechanism()) {

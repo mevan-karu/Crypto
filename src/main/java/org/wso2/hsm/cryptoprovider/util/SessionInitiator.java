@@ -38,7 +38,7 @@ public class SessionInitiator {
             try {
                 slotsWithTokens = pkcs11Module.getSlotList(Module.SlotRequirement.TOKEN_PRESENT);
             } catch (TokenException e) {
-                System.out.println("Unable to connect to token! Slots with token not initialized!\n" + e.getMessage());
+                System.out.println("Session initiation error : " + e.getMessage());
             }
         }
         if (slotsWithTokens.length > slotNo) {
@@ -49,7 +49,7 @@ public class SessionInitiator {
                         Token.SessionReadWriteBehavior.RW_SESSION, null, null);
                 session.login(Session.UserType.USER, userPin);
             } catch (TokenException e) {
-                System.out.println("Unable to get the token from the slot");
+                System.out.println("Session initiation error : " + e.getMessage());
             }
         }
         return session;

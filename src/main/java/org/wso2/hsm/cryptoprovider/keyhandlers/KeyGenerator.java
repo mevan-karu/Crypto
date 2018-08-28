@@ -38,50 +38,53 @@ public class KeyGenerator {
      * @throws TokenException : returns if exception occurred in the Token.
      */
     public boolean generateRSAKeyPair(Session session, long generationMechanism, RSAPrivateKey privateKeyTemplate,
-                                      RSAPublicKey publicKeyTemplate) throws TokenException {
+                                      RSAPublicKey publicKeyTemplate) {
         boolean generated = false;
         MechanismInfo mechanismInfo = null;
         Mechanism keyPairGenerationMechanism = null;
-        if (generationMechanism == PKCS11Constants.CKM_RSA_PKCS_KEY_PAIR_GEN) {
-            mechanismInfo = session.getToken().getMechanismInfo(Mechanism.get(PKCS11Constants.CKM_RSA_PKCS));
-            keyPairGenerationMechanism = Mechanism.get(PKCS11Constants.CKM_RSA_PKCS_KEY_PAIR_GEN);
-        } else if (generationMechanism == PKCS11Constants.CKM_RSA_X9_31_KEY_PAIR_GEN) {
-            mechanismInfo = session.getToken().getMechanismInfo(Mechanism.get(PKCS11Constants.CKM_RSA_PKCS));
-            keyPairGenerationMechanism = Mechanism.get(PKCS11Constants.CKM_RSA_X9_31_KEY_PAIR_GEN);
+        try {
+            if (generationMechanism == PKCS11Constants.CKM_RSA_PKCS_KEY_PAIR_GEN) {
+                mechanismInfo = session.getToken().getMechanismInfo(Mechanism.get(PKCS11Constants.CKM_RSA_PKCS));
+                keyPairGenerationMechanism = Mechanism.get(PKCS11Constants.CKM_RSA_PKCS_KEY_PAIR_GEN);
+            } else if (generationMechanism == PKCS11Constants.CKM_RSA_X9_31_KEY_PAIR_GEN) {
+                mechanismInfo = session.getToken().getMechanismInfo(Mechanism.get(PKCS11Constants.CKM_RSA_PKCS));
+                keyPairGenerationMechanism = Mechanism.get(PKCS11Constants.CKM_RSA_X9_31_KEY_PAIR_GEN);
+            }
+            if ((keyPairGenerationMechanism != null) && (mechanismInfo != null)) {
+
+                privateKeyTemplate.getSensitive().setBooleanValue(Boolean.TRUE);
+                privateKeyTemplate.getToken().setBooleanValue(Boolean.TRUE);
+                privateKeyTemplate.getPrivate().setBooleanValue(Boolean.TRUE);
+
+                publicKeyTemplate.getToken().setBooleanValue(Boolean.TRUE);
+
+                publicKeyTemplate.getVerify()
+                        .setBooleanValue(mechanismInfo.isVerify());
+                publicKeyTemplate.getVerifyRecover()
+                        .setBooleanValue(mechanismInfo.isVerifyRecover());
+                publicKeyTemplate.getEncrypt()
+                        .setBooleanValue(mechanismInfo.isEncrypt());
+                publicKeyTemplate.getDerive()
+                        .setBooleanValue(mechanismInfo.isDerive());
+                publicKeyTemplate.getWrap()
+                        .setBooleanValue(mechanismInfo.isWrap());
+
+                privateKeyTemplate.getSign()
+                        .setBooleanValue(mechanismInfo.isSign());
+                privateKeyTemplate.getSignRecover()
+                        .setBooleanValue(mechanismInfo.isSignRecover());
+                privateKeyTemplate.getDecrypt()
+                        .setBooleanValue(mechanismInfo.isDecrypt());
+                privateKeyTemplate.getDerive()
+                        .setBooleanValue(mechanismInfo.isDerive());
+                privateKeyTemplate.getUnwrap()
+                        .setBooleanValue(mechanismInfo.isUnwrap());
+                session.generateKeyPair(keyPairGenerationMechanism, publicKeyTemplate, privateKeyTemplate);
+                generated = true;
+            }
+        } catch (TokenException e) {
+            System.out.println("RSA key pair generation error : " + e.getMessage());
         }
-        if ((keyPairGenerationMechanism != null) && (mechanismInfo != null)) {
-
-            privateKeyTemplate.getSensitive().setBooleanValue(Boolean.TRUE);
-            privateKeyTemplate.getToken().setBooleanValue(Boolean.TRUE);
-            privateKeyTemplate.getPrivate().setBooleanValue(Boolean.TRUE);
-
-            publicKeyTemplate.getToken().setBooleanValue(Boolean.TRUE);
-
-            publicKeyTemplate.getVerify()
-                    .setBooleanValue(mechanismInfo.isVerify());
-            publicKeyTemplate.getVerifyRecover()
-                    .setBooleanValue(mechanismInfo.isVerifyRecover());
-            publicKeyTemplate.getEncrypt()
-                    .setBooleanValue(mechanismInfo.isEncrypt());
-            publicKeyTemplate.getDerive()
-                    .setBooleanValue(mechanismInfo.isDerive());
-            publicKeyTemplate.getWrap()
-                    .setBooleanValue(mechanismInfo.isWrap());
-
-            privateKeyTemplate.getSign()
-                    .setBooleanValue(mechanismInfo.isSign());
-            privateKeyTemplate.getSignRecover()
-                    .setBooleanValue(mechanismInfo.isSignRecover());
-            privateKeyTemplate.getDecrypt()
-                    .setBooleanValue(mechanismInfo.isDecrypt());
-            privateKeyTemplate.getDerive()
-                    .setBooleanValue(mechanismInfo.isDerive());
-            privateKeyTemplate.getUnwrap()
-                    .setBooleanValue(mechanismInfo.isUnwrap());
-            session.generateKeyPair(keyPairGenerationMechanism, publicKeyTemplate, privateKeyTemplate);
-            generated = true;
-        }
-        session.closeSession();
         return generated;
     }
 
@@ -104,12 +107,7 @@ public class KeyGenerator {
             session.generateKey(keyMechanism, secretKeyTemplate);
             generated = true;
         } catch (TokenException e) {
-            System.out.println("AES key generation failed : " + e.getMessage());
-        }
-        try {
-            session.closeSession();
-        } catch (TokenException e) {
-            System.out.println("Unable to close the session!");
+            System.out.println("AES key generation error : " + e.getMessage());
         }
         return generated;
     }

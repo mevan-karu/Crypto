@@ -15,12 +15,16 @@ public class KeyRetriever {
      * @return retrieved key
      * @throws TokenException
      */
-    public Object retrieveKey(Session session, Key keyTemplate) throws TokenException {
+    public Object retrieveKey(Session session, Key keyTemplate) {
         Object key = null;
-        session.findObjectsInit(keyTemplate);
-        Object[] secretKeyArray = session.findObjects(1);
-        if (secretKeyArray.length > 0) {
-            key = secretKeyArray[0];
+        try {
+            session.findObjectsInit(keyTemplate);
+            Object[] secretKeyArray = session.findObjects(1);
+            if (secretKeyArray.length > 0) {
+                key = secretKeyArray[0];
+            }
+        } catch (TokenException e) {
+            System.out.println("Key retrieval error : " + e.getMessage());
         }
         return key;
     }

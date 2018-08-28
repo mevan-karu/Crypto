@@ -14,9 +14,9 @@ public class FileHandler {
 
     /**
      * Read a file when path to the file is given
+     *
      * @param path : Path to the file
      * @return byte array of data contained in the file
-     * @throws IOException
      */
 
     public byte[] readFile(String path) {
@@ -36,28 +36,32 @@ public class FileHandler {
             outputStream.close();
             rawData = outputStream.toByteArray();
         } catch (FileNotFoundException e) {
-            System.out.println("Couldn't locate the file.");
+            System.out.println("File read error : Couldn't locate the file.\n" + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Couldn't read the file.");
+            System.out.println("File read error : Couldn't read the file.\n" + e.getMessage());
         }
         return rawData;
     }
 
     /**
      * Save a file to given path.
+     *
      * @param path : Location of the file needs to be saved.
      * @param data : Data to be written to the file.
-     * @throws IOException
      */
-    public void saveFile(String path, byte[] data) throws IOException {
-        File file = new File(path);
-        if (!file.exists()) {
-            file.getParentFile().mkdirs();
-            file.createNewFile();
+    public void saveFile(String path, byte[] data) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            }
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(data);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            System.out.println("File saving error : " + e.getMessage());
         }
-        FileOutputStream outputStream = new FileOutputStream(file);
-        outputStream.write(data);
-        outputStream.flush();
-        outputStream.close();
     }
 }
