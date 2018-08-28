@@ -14,5 +14,6 @@ This application is under development. Currently supported mechanisms are follow
 
 First you need to add **IAIK PKCS #11 wrapper** to your project as a dependency. You can find the way to do it in following [blog](https://medium.com/@mevan.karu/want-to-know-how-to-talk-to-a-hsm-at-code-level-69cb9ba7b392).
 
+You can use the Utimaco simulator for testing purposes. Refer to [this](https://medium.com/@mevan.karu/you-dont-need-to-buy-a-hsm-to-see-how-it-works-2bf201f39d83) blog for simulator configurations.
 
 Configure **pkcs11Sample.properties** file as required and rename the file to **pkcs11.protperties**.
