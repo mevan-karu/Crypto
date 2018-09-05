@@ -16,7 +16,7 @@ public class SignatureHandler {
     }
 
     /**
-     * Method to full sign a given data.
+     * Method to sign a given data.
      *
      * @param session       : Session used to perform signing.
      * @param dataToSign    : Data to be signed.
@@ -25,10 +25,11 @@ public class SignatureHandler {
      * @return signature as a byte array.
      * @throws TokenException
      */
-    public byte[] fullSign(Session session, byte[] dataToSign, long signMechanism, PrivateKey signKey) {
+    public byte[] sign(Session session, byte[] dataToSign, long signMechanism, PrivateKey signKey) {
         byte[] signature = null;
         Mechanism signingMechanism = Mechanism.get(signMechanism);
-        if (signingMechanism.isFullSignVerifyMechanism()) {
+        if (signingMechanism.isFullSignVerifyMechanism() ||
+                signingMechanism.isSingleOperationSignVerifyMechanism()) {
             try {
                 session.signInit(signingMechanism, signKey);
                 signature = session.sign(dataToSign);
@@ -40,7 +41,7 @@ public class SignatureHandler {
     }
 
     /**
-     * Method to full verify a given data.
+     * Method to verify a given data.
      *
      * @param session         : Session used to perform verifying.
      * @param dataToVerify    : Data to be verified.
@@ -49,8 +50,8 @@ public class SignatureHandler {
      * @param verificationKey : Key used for verification.
      * @return True if verified.
      */
-    public boolean fullVerify(Session session, byte[] dataToVerify, byte[] signature,
-                              long verifyMechanism, PublicKey verificationKey) {
+    public boolean verify(Session session, byte[] dataToVerify, byte[] signature,
+                          long verifyMechanism, PublicKey verificationKey) {
         boolean verified = false;
         Mechanism verifyingMechanism = Mechanism.get(verifyMechanism);
         if (verifyingMechanism.isFullSignVerifyMechanism()) {

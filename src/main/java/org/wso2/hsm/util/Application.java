@@ -1,21 +1,27 @@
 package org.wso2.hsm.util;
 
+import iaik.pkcs.pkcs11.Mechanism;
 import iaik.pkcs.pkcs11.Module;
 import iaik.pkcs.pkcs11.Session;
 import iaik.pkcs.pkcs11.TokenException;
 import iaik.pkcs.pkcs11.objects.AESSecretKey;
+import iaik.pkcs.pkcs11.objects.Key;
 import iaik.pkcs.pkcs11.objects.RSAPrivateKey;
 import iaik.pkcs.pkcs11.objects.RSAPublicKey;
+import iaik.pkcs.pkcs11.parameters.InitializationVectorParameters;
+import org.apache.axiom.om.util.Base64;
 import org.wso2.hsm.cryptoprovider.keyhandlers.KeyGenerator;
 import org.wso2.hsm.cryptoprovider.keyhandlers.KeyRetriever;
 import org.wso2.hsm.cryptoprovider.operators.Cipher;
 import org.wso2.hsm.cryptoprovider.operators.HashGenerator;
 import org.wso2.hsm.cryptoprovider.operators.SignatureHandler;
+import org.wso2.hsm.cryptoprovider.util.MechanismResolver;
 import org.wso2.hsm.cryptoprovider.util.SessionInitiator;
 import sun.security.pkcs11.wrapper.PKCS11Constants;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Application {
@@ -29,6 +35,8 @@ public class Application {
     private Cipher cipher;
     private SignatureHandler signaturehandler;
     private HashGenerator hashGenerator;
+    private HashMap<Integer, String> encryptionDecryptionMechanisms;
+    private MechanismResolver mechanismResolver;
 
     /**
      * Constructor of the Application Class
@@ -54,6 +62,16 @@ public class Application {
         cipher = new Cipher();
         signaturehandler = new SignatureHandler();
         hashGenerator = new HashGenerator();
+        encryptionDecryptionMechanisms = new HashMap<Integer, String>();
+        mechanismResolver = new MechanismResolver();
+        int j = 1;
+        for (String mechanismName : MechanismResolver.getMechanisms().keySet()) {
+            Mechanism mechanism = Mechanism.get(MechanismResolver.getMechanisms().get(mechanismName));
+            if (mechanism.isFullEncryptDecryptMechanism() || mechanism.isSingleOperationEncryptDecryptMechanism()) {
+                encryptionDecryptionMechanisms.put(j, mechanismName);
+                j += 1;
+            }
+        }
     }
 
     /**
@@ -98,7 +116,8 @@ public class Application {
                     break;
             }
         } catch (Exception e) {
-            System.out.println("Input should be a number!!!\n" + e.getMessage());
+            System.out.println("Input should be a number!!!\n");
+            e.printStackTrace();
         }
     }
 
@@ -172,72 +191,79 @@ public class Application {
         }
     }
 
-    private void encrypt() throws IOException, TokenException {
-        String encryptPrompt = "Select encryption mechanism \n" +
-                "1. AES encryption \n" +
-                "2. RSA encryption \n" +
-                "Enter no. of encryption type : ";
-        String input = getInput(encryptPrompt);
+    private void encrypt() throws TokenException {
+        String encryptPrompt = generatePromptText(encryptionDecryptionMechanisms);
+        int input = Integer.valueOf(getInput(encryptPrompt));
         String pathPrompt = "Path of file to be encrypted = ";
         String path = getInput(pathPrompt);
         String keyLabelPrompt = "Label of the encryption key = ";
         String keyLabel = getInput(keyLabelPrompt);
         Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
         byte[] dataToEncrypt = fileHandler.readFile(path);
-        long encryptionMechanism = 0;
-        if (input.equals("1")) {
-            AESSecretKey secretKeyTemplate = new AESSecretKey();
-            secretKeyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
-            AESSecretKey secretKey = (AESSecretKey) keyRetriever.retrieveKey(session, secretKeyTemplate);
-            byte[] initializationVector = new byte[16];
-            byte[] encryptedData = cipher.encryptAES(session, dataToEncrypt, secretKey,
-                    initializationVector, PKCS11Constants.CKM_AES_CBC_PAD);
-            fileHandler.saveFile("encrypted/sample", encryptedData);
-            System.out.println("Encrypted text : " + new String(encryptedData));
-        } else if (input.equals("2")) {
-            RSAPublicKey publicKeyTemplate = new RSAPublicKey();
-            publicKeyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
-            RSAPublicKey publicKey = (RSAPublicKey) keyRetriever.retrieveKey(session, publicKeyTemplate);
-            byte[] encryptedData = cipher.encryptRSA(session, dataToEncrypt, publicKey, encryptionMechanism);
-            fileHandler.saveFile("encrypted/sample", encryptedData);
+        if (encryptionDecryptionMechanisms.containsKey(input)) {
+            Key keyTemplate = new Key();
+            keyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
+            Key key = (Key) keyRetriever.retrieveKey(session, keyTemplate);
+            Mechanism encryptionMechanism = mechanismResolver.resolveMechanism("encrypt",
+                    encryptionDecryptionMechanisms.get(input), dataToEncrypt);
+            byte[] encryptedData = cipher.encrypt(session, dataToEncrypt, key, encryptionMechanism);
+            if (encryptionMechanism.getParameters() instanceof InitializationVectorParameters) {
+                byte[] iv = ((InitializationVectorParameters)
+                        encryptionMechanism.getParameters()).getInitializationVector();
+                byte[] encryptedDataWithIV = new byte[encryptedData.length +
+                        iv.length];
+                System.arraycopy(iv, 0, encryptedDataWithIV, 0, iv.length);
+                System.arraycopy(encryptedData, 0, encryptedDataWithIV, iv.length, encryptedData.length);
+                encryptedData = encryptedDataWithIV;
+            }
+            fileHandler.saveFile("encrypted/sample", Base64.encode(encryptedData).getBytes());
             System.out.println("Encrypted text : " + new String(encryptedData));
         } else {
             System.out.println("Encryption mechanism selection : Invalid input!");
         }
+        session.closeSession();
     }
 
-    private void decrypt() throws TokenException {
-        String decryptPrompt = "Select decryption mechanism \n" +
-                "1. AES decryption \n" +
-                "2. RSA decryption \n" +
-                "Enter no. of the decryption type : ";
-        String input = getInput(decryptPrompt);
+    private void decrypt() {
+        String decryptPrompt = generatePromptText(encryptionDecryptionMechanisms);
+        int input = Integer.valueOf(getInput(decryptPrompt));
         String pathPrompt = "Path of file to be decrypted : ";
         String path = getInput(pathPrompt);
         String keyLabelPrompt = "Label of the decryption key : ";
         String keyLabel = getInput(keyLabelPrompt);
         Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
-        byte[] dataToDecrypt = fileHandler.readFile(path);
-        if (input.equals("1")) {
-            AESSecretKey secretKeyTemplate = new AESSecretKey();
-            secretKeyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
-            AESSecretKey secretKey = (AESSecretKey) keyRetriever.retrieveKey(session, secretKeyTemplate);
-            byte[] initializationVector = new byte[16];
-            byte[] decryptedData = cipher.decryptAES(session, dataToDecrypt, secretKey,
-                    PKCS11Constants.CKM_AES_CBC_PAD, initializationVector);
+        byte[] dataToDecrypt = Base64.decode(new String(fileHandler.readFile(path)));
+        if (encryptionDecryptionMechanisms.containsKey(input)) {
+            Key keyTemplate = new Key();
+            keyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
+            Key decryptionKey = (Key) keyRetriever.retrieveKey(session, keyTemplate);
+            Mechanism decryptMechanism = mechanismResolver.resolveMechanism("decrypt",
+                    encryptionDecryptionMechanisms.get(input), dataToDecrypt);
+            if (decryptMechanism.getParameters() instanceof InitializationVectorParameters) {
+                byte[] iv = ((InitializationVectorParameters)
+                        decryptMechanism.getParameters()).getInitializationVector();
+                byte[] dataToDecryptWithoutIV = new byte[dataToDecrypt.length - iv.length];
+                System.arraycopy(dataToDecrypt, iv.length, dataToDecryptWithoutIV, 0, dataToDecrypt.length - iv.length);
+                dataToDecrypt = dataToDecryptWithoutIV;
+            }
+            byte[] decryptedData = cipher.decrypt(session, dataToDecrypt, decryptionKey,
+                    decryptMechanism);
             fileHandler.saveFile("decrypted/sample.txt", decryptedData);
-            System.out.println("Decrypted text : " + new String(decryptedData));
-        } else if (input.equals("2")) {
-            RSAPrivateKey privateKeyTemplate = new RSAPrivateKey();
-            privateKeyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
-            RSAPrivateKey privateKey = (RSAPrivateKey) keyRetriever.retrieveKey(session, privateKeyTemplate);
-            byte[] decryptedData = cipher.decryptRSA(session, dataToDecrypt, privateKey, PKCS11Constants.CKM_RSA_PKCS);
-            fileHandler.saveFile("decrypted/sample.txt", decryptedData);
+            /*
+            AESSecretKey secretKey = new AESSecretKey();
+            secretKey.getValue().setByteArrayValue(decryptedData);
+            secretKey.getLabel().setCharArrayValue("AssertionAES".toCharArray());
+            KeySaver.saveAESKey(session, secretKey);
+            */
             System.out.println("Decrypted text : " + new String(decryptedData));
         } else {
             System.out.println("Decryption mechanism selection : Invalid input!");
         }
-        session.closeSession();
+        try {
+            session.closeSession();
+        } catch (TokenException e) {
+            e.printStackTrace();
+        }
     }
 
     private void sign() throws TokenException {
@@ -255,7 +281,7 @@ public class Application {
             RSAPrivateKey privateKeyTemplate = new RSAPrivateKey();
             privateKeyTemplate.getLabel().setCharArrayValue(label.toCharArray());
             RSAPrivateKey privateKey = (RSAPrivateKey) keyRetriever.retrieveKey(session, privateKeyTemplate);
-            byte[] signature = signaturehandler.fullSign(session,
+            byte[] signature = signaturehandler.sign(session,
                     fileHandler.readFile(filePath), mechanism, privateKey);
             System.out.println("Signature : " + Arrays.toString(signature));
             fileHandler.saveFile("signature/sample", signature);
@@ -283,13 +309,22 @@ public class Application {
             RSAPublicKey publicKeyTemplate = new RSAPublicKey();
             publicKeyTemplate.getLabel().setCharArrayValue(label.toCharArray());
             RSAPublicKey publicKey = (RSAPublicKey) keyRetriever.retrieveKey(session, publicKeyTemplate);
-            boolean verification = signaturehandler.fullVerify(session, fileHandler.readFile(filePath),
+            boolean verification = signaturehandler.verify(session, fileHandler.readFile(filePath),
                     fileHandler.readFile(signaturePath), mechanism, publicKey);
             System.out.println("Verification : " + verification);
             session.closeSession();
         } else {
             System.out.println("Verify mechanism selection : Invalid input!!");
         }
+    }
+
+    private String generatePromptText(HashMap<Integer, String> mechanisms) {
+        String promptText = "Select the number of the required mechanism\n";
+        for (int i = 1; i <= mechanisms.size(); i++) {
+            promptText += String.valueOf(i) + ". " + mechanisms.get(i) + "\n";
+        }
+        promptText += "Enter the number : ";
+        return promptText;
     }
 
     private long selectSignMechanism() {

@@ -3,58 +3,60 @@ package org.wso2.hsm.cryptoprovider.operators;
 import iaik.pkcs.pkcs11.Mechanism;
 import iaik.pkcs.pkcs11.Session;
 import iaik.pkcs.pkcs11.TokenException;
-import iaik.pkcs.pkcs11.objects.AESSecretKey;
-import iaik.pkcs.pkcs11.objects.RSAPrivateKey;
-import iaik.pkcs.pkcs11.objects.RSAPublicKey;
-import iaik.pkcs.pkcs11.parameters.InitializationVectorParameters;
+import iaik.pkcs.pkcs11.objects.Key;
 
 public class Cipher {
 
+    /**
+     * Constructor of a Cipher instance.
+     */
     public Cipher() {
     }
 
-    public byte[] encryptAES(Session session, byte[] dataToBeEncrypted,
-                             AESSecretKey encryptionKey, byte[] encryptInitializationVector,
-                             long encryptingMechanism) throws TokenException {
-        Mechanism encryptionMechanism = Mechanism.get(encryptingMechanism);
-        InitializationVectorParameters encryptInitializationVectorParameters = new InitializationVectorParameters(encryptInitializationVector);
-        encryptionMechanism.setParameters(encryptInitializationVectorParameters);
-        session.encryptInit(encryptionMechanism, encryptionKey);
-        byte[] encryptedData = session.encrypt(dataToBeEncrypted);
-        return encryptedData;
-    }
-
-    public byte[] decryptAES(Session session, byte[] dataToBeDecrypted,
-                             AESSecretKey decryptionKey, long decryptingMechanism,
-                             byte[] decryptionInitializationVector) throws TokenException {
-        Mechanism decryptionMechanism = Mechanism.get(decryptingMechanism);
-        InitializationVectorParameters decryptInitializationVectorParameters = new InitializationVectorParameters(
-                decryptionInitializationVector);
-        decryptionMechanism.setParameters(decryptInitializationVectorParameters);
-        session.decryptInit(decryptionMechanism, decryptionKey);
-        byte[] decryptedData = session.decrypt(dataToBeDecrypted);
-        return decryptedData;
-    }
-
-
-    public byte[] encryptRSA(Session session, byte[] dataToBeEncrypted,
-                             RSAPublicKey encryptionKey, long encryptingMechanism) throws TokenException {
+    /**
+     * Method to encrypt a given set of data using a given key.
+     *
+     * @param session             : Instance of the session used for encryption.
+     * @param dataToBeEncrypted   : Byte array of data to be encrypted.
+     * @param encryptionKey       : Key used for encryption.
+     * @param encryptionMechanism : Encrypting mechanism.
+     * @return : Byte array of encrypted data.
+     */
+    public byte[] encrypt(Session session, byte[] dataToBeEncrypted,
+                          Key encryptionKey, Mechanism encryptionMechanism) {
         byte[] encryptedData = null;
-        Mechanism encryptionMechanism = Mechanism.get(encryptingMechanism);
-        if (encryptionMechanism.isSingleOperationEncryptDecryptMechanism()) {
-            session.encryptInit(encryptionMechanism, encryptionKey);
-            encryptedData = session.encrypt(dataToBeEncrypted);
+        if (encryptionMechanism.isSingleOperationEncryptDecryptMechanism()
+                || encryptionMechanism.isFullEncryptDecryptMechanism()) {
+            try {
+                session.encryptInit(encryptionMechanism, encryptionKey);
+                encryptedData = session.encrypt(dataToBeEncrypted);
+            } catch (TokenException e) {
+                e.printStackTrace();
+            }
         }
         return encryptedData;
     }
 
-    public byte[] decryptRSA(Session session, byte[] dataToBeDecrypted,
-                             RSAPrivateKey decryptionKey, long decryptingMechanism) throws TokenException {
+    /**
+     * Method to decrypt a given set of data using a given key.
+     *
+     * @param session             : Instance of the session used for decryption.
+     * @param dataToBeDecrypted   : Byte array of data to be decrypted.
+     * @param decryptionKey       : Key used for decryption.
+     * @param decryptionMechanism : Decrypting mechanism.
+     * @return
+     */
+    public byte[] decrypt(Session session, byte[] dataToBeDecrypted,
+                          Key decryptionKey, Mechanism decryptionMechanism) {
         byte[] decryptedData = null;
-        Mechanism decryptionMechanism = Mechanism.get(decryptingMechanism);
-        if (decryptionMechanism.isSingleOperationEncryptDecryptMechanism()) {
-            session.decryptInit(decryptionMechanism, decryptionKey);
-            decryptedData = session.decrypt(dataToBeDecrypted);
+        if (decryptionMechanism.isSingleOperationEncryptDecryptMechanism()
+                || decryptionMechanism.isFullEncryptDecryptMechanism()) {
+            try {
+                session.decryptInit(decryptionMechanism, decryptionKey);
+                decryptedData = session.decrypt(dataToBeDecrypted);
+            } catch (TokenException e) {
+                e.printStackTrace();
+            }
         }
         return decryptedData;
     }

@@ -3,4 +3,5 @@ input.txt
 target/*
 encrypted/*
 decrypted/*
+signature/*
 src/main/resources/properties/pkcs11.properties
