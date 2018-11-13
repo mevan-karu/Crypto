@@ -14,6 +14,13 @@
             <artifactId>axiom-api</artifactId>
             <version>1.2.10</version>
         </dependency>
+        <dependency>
+            <groupId>org.iaik</groupId>
+            <artifactId>pkcs11wrapper</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/lib/iaikPkcs11Wrapper.jar</systemPath>
+        </dependency>
     </dependencies>
 
 </project>

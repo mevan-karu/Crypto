@@ -6,13 +6,13 @@ import iaik.pkcs.pkcs11.TokenException;
 import iaik.pkcs.pkcs11.objects.PrivateKey;
 import iaik.pkcs.pkcs11.objects.PublicKey;
 
-
 public class SignatureHandler {
 
     /**
      * Constructor for signature handler.
      */
     public SignatureHandler() {
+
     }
 
     /**
@@ -25,13 +25,13 @@ public class SignatureHandler {
      * @return signature as a byte array.
      * @throws TokenException
      */
-    public byte[] sign(Session session, byte[] dataToSign, long signMechanism, PrivateKey signKey) {
+    public byte[] sign(Session session, byte[] dataToSign, Mechanism signMechanism, PrivateKey signKey) {
+
         byte[] signature = null;
-        Mechanism signingMechanism = Mechanism.get(signMechanism);
-        if (signingMechanism.isFullSignVerifyMechanism() ||
-                signingMechanism.isSingleOperationSignVerifyMechanism()) {
+        if (signMechanism.isFullSignVerifyMechanism() ||
+                signMechanism.isSingleOperationSignVerifyMechanism()) {
             try {
-                session.signInit(signingMechanism, signKey);
+                session.signInit(signMechanism, signKey);
                 signature = session.sign(dataToSign);
             } catch (TokenException e) {
                 System.out.println("Full sign generation error : " + e.getMessage());
@@ -51,12 +51,12 @@ public class SignatureHandler {
      * @return True if verified.
      */
     public boolean verify(Session session, byte[] dataToVerify, byte[] signature,
-                          long verifyMechanism, PublicKey verificationKey) {
+                          Mechanism verifyMechanism, PublicKey verificationKey) {
+
         boolean verified = false;
-        Mechanism verifyingMechanism = Mechanism.get(verifyMechanism);
-        if (verifyingMechanism.isFullSignVerifyMechanism()) {
+        if (verifyMechanism.isFullSignVerifyMechanism()) {
             try {
-                session.verifyInit(verifyingMechanism, verificationKey);
+                session.verifyInit(verifyMechanism, verificationKey);
                 session.verify(dataToVerify, signature);
                 verified = true;
             } catch (TokenException e) {
