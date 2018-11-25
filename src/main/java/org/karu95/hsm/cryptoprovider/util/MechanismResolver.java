@@ -1,4 +1,4 @@
-package org.wso2.hsm.cryptoprovider.util;
+package org.karu95.hsm.cryptoprovider.util;
 
 import iaik.pkcs.pkcs11.Mechanism;
 import iaik.pkcs.pkcs11.parameters.InitializationVectorParameters;

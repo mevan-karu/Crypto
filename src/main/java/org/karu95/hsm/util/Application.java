@@ -1,4 +1,4 @@
-package org.wso2.hsm.util;
+package org.karu95.hsm.util;
 
 import iaik.pkcs.pkcs11.Mechanism;
 import iaik.pkcs.pkcs11.Module;
@@ -10,13 +10,13 @@ import iaik.pkcs.pkcs11.objects.RSAPrivateKey;
 import iaik.pkcs.pkcs11.objects.RSAPublicKey;
 import iaik.pkcs.pkcs11.parameters.InitializationVectorParameters;
 import org.apache.axiom.om.util.Base64;
-import org.wso2.hsm.cryptoprovider.keyhandlers.KeyGenerator;
-import org.wso2.hsm.cryptoprovider.keyhandlers.KeyRetriever;
-import org.wso2.hsm.cryptoprovider.operators.Cipher;
-import org.wso2.hsm.cryptoprovider.operators.HashGenerator;
-import org.wso2.hsm.cryptoprovider.operators.SignatureHandler;
-import org.wso2.hsm.cryptoprovider.util.MechanismResolver;
-import org.wso2.hsm.cryptoprovider.util.SessionInitiator;
+import org.karu95.hsm.cryptoprovider.keyhandlers.KeyGenerator;
+import org.karu95.hsm.cryptoprovider.keyhandlers.KeyRetriever;
+import org.karu95.hsm.cryptoprovider.operators.Cipher;
+import org.karu95.hsm.cryptoprovider.operators.HashGenerator;
+import org.karu95.hsm.cryptoprovider.operators.SignatureHandler;
+import org.karu95.hsm.cryptoprovider.util.MechanismResolver;
+import org.karu95.hsm.cryptoprovider.util.SessionInitiator;
 import sun.security.pkcs11.wrapper.PKCS11Constants;
 
 import java.io.IOException;
@@ -224,7 +224,7 @@ public class Application {
         String path = getInput(pathPrompt);
         String keyLabelPrompt = "Label of the encryption key = ";
         String keyLabel = getInput(keyLabelPrompt);
-        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
+        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
         try {
             byte[] dataToEncrypt = fileHandler.readFile(path);
             if (encryptionDecryptionMechanisms.containsKey(input)) {
@@ -261,7 +261,7 @@ public class Application {
         String path = getInput(pathPrompt);
         String keyLabelPrompt = "Label of the decryption key : ";
         String keyLabel = getInput(keyLabelPrompt);
-        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
+        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
         try {
             byte[] dataToDecrypt = Base64.decode(new String(fileHandler.readFile(path)));
             if (encryptionDecryptionMechanisms.containsKey(input)) {
@@ -302,7 +302,7 @@ public class Application {
             privateKeyTemplate.getLabel().setCharArrayValue(label.toCharArray());
             Mechanism mechanism = mechanismResolver.resolveMechanism("sign",
                     signVerifyMechanisms.get(input), null);
-            Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
+            Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
             try {
                 RSAPrivateKey privateKey = (RSAPrivateKey) keyRetriever.retrieveKey(session, privateKeyTemplate);
                 byte[] signature = signatureHandler.sign(session,
@@ -333,7 +333,7 @@ public class Application {
             publicKeyTemplate.getLabel().setCharArrayValue(label.toCharArray());
             Mechanism mechanism = mechanismResolver.resolveMechanism("verify",
                     signVerifyMechanisms.get(input), null);
-            Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
+            Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
             try {
                 RSAPublicKey publicKey = (RSAPublicKey) keyRetriever.retrieveKey(session, publicKeyTemplate);
                 boolean verification = signatureHandler.verify(session, fileHandler.readFile(filePath),
@@ -390,7 +390,7 @@ public class Application {
         }
         String filePrompt = "Path of file to be hashed : ";
         String filePath = getInput(filePrompt);
-        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, 0);
+        Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
         String hash = hashGenerator.hash(session, fileHandler.readFile(filePath), mechanism);
         System.out.println("Hash value : " + hash);
     }

@@ -1,4 +1,4 @@
-package org.wso2.hsm.util;
+package org.karu95.hsm.util;
 
 import iaik.pkcs.pkcs11.TokenException;
 

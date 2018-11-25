@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: org.wso2.hsm.util.Main
+Class-Path: .
+Main-Class: org.karu95.hsm.util.Main
 

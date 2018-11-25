@@ -1,4 +1,4 @@
-package org.wso2.hsm.cryptoprovider.operators;
+package org.karu95.hsm.cryptoprovider.operators;
 
 import iaik.pkcs.pkcs11.Mechanism;
 import iaik.pkcs.pkcs11.Session;

@@ -1,4 +1,4 @@
-package org.wso2.hsm.cryptoprovider.keyhandlers;
+package org.karu95.hsm.cryptoprovider.keyhandlers;
 
 import iaik.pkcs.pkcs11.Session;
 import iaik.pkcs.pkcs11.TokenException;

@@ -16,7 +16,6 @@ src/main/resources/properties/pkcs11.properties
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
