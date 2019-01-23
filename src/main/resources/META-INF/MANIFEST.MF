@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: .
-Main-Class: org.karu95.hsm.util.Main
-

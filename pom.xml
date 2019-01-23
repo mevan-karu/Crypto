@@ -9,6 +9,19 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <repositories>
+        <repository>
+            <id>wso2-nexus</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.ws.commons.axiom</groupId>
@@ -16,11 +29,9 @@
             <version>1.2.10</version>
         </dependency>
         <dependency>
-            <groupId>org.iaik</groupId>
-            <artifactId>pkcs11wrapper</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/iaikPkcs11Wrapper.jar</systemPath>
+            <groupId>org.wso2.carbon.pkcs11</groupId>
+            <artifactId>org.wso2.carbon.pkcs11.wrapper</artifactId>
+            <version>${carbon.pkcs11.wrapper.version}</version>
         </dependency>
     </dependencies>
 
@@ -28,14 +39,33 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
                 <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
                     <archive>
-                        <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+                        <manifest>
+                            <mainClass>org.karu95.hsm.util.Main</mainClass>
+                        </manifest>
                     </archive>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>assemble-all</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <properties>
+        <carbon.pkcs11.wrapper.version>1.0.0</carbon.pkcs11.wrapper.version>
+    </properties>
+
 </project>
