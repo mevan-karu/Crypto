@@ -13,14 +13,13 @@ public class FileHandler {
     }
 
     /**
-     * Read a file when path to the file is given
+     * Read a file.
      *
-     * @param path : Path to the file
-     * @return byte array of data contained in the file
+     * @param file : File to be read.
+     * @return byte array of data contained in the file.
      */
 
-    public byte[] readFile(String path) {
-        File file = new File(path);
+    public byte[] readFile(File file) {
         InputStream inputStream = null;
         byte[] rawData = null;
         try {
@@ -44,14 +43,13 @@ public class FileHandler {
     }
 
     /**
-     * Save a file to given path.
+     * Save a file.
      *
-     * @param path : Location of the file needs to be saved.
+     * @param file : File to be saved.
      * @param data : Data to be written to the file.
      */
-    public void saveFile(String path, byte[] data) {
+    public void saveFile(File file, byte[] data) {
         try {
-            File file = new File(path);
             if (!file.exists()) {
                 file.getParentFile().mkdirs();
                 file.createNewFile();

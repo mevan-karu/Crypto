@@ -19,11 +19,16 @@ import org.karu95.hsm.cryptoprovider.util.MechanismResolver;
 import org.karu95.hsm.cryptoprovider.util.SessionInitiator;
 import sun.security.pkcs11.wrapper.PKCS11Constants;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class Application {
+
+    private static final String ENCRYPTED_FILE_DIR = "encrypted";
+    private static final String DECRYPTED_FILE_DIR = "decrypted";
+    private static final String SIGNED_FILE_DIR = "signature";
 
     private char[] userPIN;
     private int slotNo;
@@ -130,6 +135,7 @@ public class Application {
                     break;
                 case 6:
                     hash();
+                    break;
                 case 7:
                     quit = true;
                     break;
@@ -226,7 +232,8 @@ public class Application {
         String keyLabel = getInput(keyLabelPrompt);
         Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
         try {
-            byte[] dataToEncrypt = fileHandler.readFile(path);
+            File file = new File(path);
+            byte[] dataToEncrypt = fileHandler.readFile(file);
             if (encryptionDecryptionMechanisms.containsKey(input)) {
                 Key keyTemplate = new Key();
                 keyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
@@ -243,7 +250,8 @@ public class Application {
                     System.arraycopy(encryptedData, 0, encryptedDataWithIV, iv.length, encryptedData.length);
                     encryptedData = encryptedDataWithIV;
                 }
-                fileHandler.saveFile("encrypted/sample", Base64.encode(encryptedData).getBytes());
+                File fileToBeSaved = new File(ENCRYPTED_FILE_DIR + File.separator + file.getName());
+                fileHandler.saveFile(fileToBeSaved, Base64.encode(encryptedData).getBytes());
                 System.out.println("Encrypted text : " + new String(encryptedData));
             } else {
                 System.out.println("Encryption mechanism selection : Invalid input!");
@@ -263,7 +271,8 @@ public class Application {
         String keyLabel = getInput(keyLabelPrompt);
         Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
         try {
-            byte[] dataToDecrypt = Base64.decode(new String(fileHandler.readFile(path)));
+            File fileToDecrypt = new File(path);
+            byte[] dataToDecrypt = Base64.decode(new String(fileHandler.readFile(fileToDecrypt)));
             if (encryptionDecryptionMechanisms.containsKey(input)) {
                 Key keyTemplate = new Key();
                 keyTemplate.getLabel().setCharArrayValue(keyLabel.toCharArray());
@@ -279,7 +288,8 @@ public class Application {
                 }
                 byte[] decryptedData = cipher.decrypt(session, dataToDecrypt, decryptionKey,
                         decryptMechanism);
-                fileHandler.saveFile("decrypted/sample.txt", decryptedData);
+                File decryptedFile = new File(DECRYPTED_FILE_DIR + File.separator + fileToDecrypt.getName());
+                fileHandler.saveFile(decryptedFile, decryptedData);
                 System.out.println("Decrypted text : " + new String(decryptedData));
             } else {
                 System.out.println("Decryption mechanism selection : Invalid input!");
@@ -305,11 +315,12 @@ public class Application {
             Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
             try {
                 RSAPrivateKey privateKey = (RSAPrivateKey) keyRetriever.retrieveKey(session, privateKeyTemplate);
+                File fileToBeSigned = new File(filePath);
                 byte[] signature = signatureHandler.sign(session,
-                        fileHandler.readFile(filePath), mechanism, privateKey);
+                        fileHandler.readFile(fileToBeSigned), mechanism, privateKey);
                 System.out.println("Signature : " + new String(signature));
-                fileHandler.saveFile("signature/sample", signature);
-                System.out.println();
+                File signatureFile = new File(SIGNED_FILE_DIR + File.separator + fileToBeSigned.getName());
+                fileHandler.saveFile(signatureFile, signature);
             } finally {
                 session.closeSession();
             }
@@ -336,8 +347,10 @@ public class Application {
             Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
             try {
                 RSAPublicKey publicKey = (RSAPublicKey) keyRetriever.retrieveKey(session, publicKeyTemplate);
-                boolean verification = signatureHandler.verify(session, fileHandler.readFile(filePath),
-                        fileHandler.readFile(signaturePath), mechanism, publicKey);
+                File fileToBeValidated = new File(filePath);
+                File signatureFile = new File(signaturePath);
+                boolean verification = signatureHandler.verify(session, fileHandler.readFile(fileToBeValidated),
+                        fileHandler.readFile(signatureFile), mechanism, publicKey);
                 System.out.println("Verification : " + verification);
             } finally {
                 session.closeSession();
@@ -391,7 +404,7 @@ public class Application {
         String filePrompt = "Path of file to be hashed : ";
         String filePath = getInput(filePrompt);
         Session session = sessionInitiator.initiateSession(pkcs11Module, userPIN, slotNo);
-        String hash = hashGenerator.hash(session, fileHandler.readFile(filePath), mechanism);
+        String hash = hashGenerator.hash(session, fileHandler.readFile(new File(filePath)), mechanism);
         System.out.println("Hash value : " + hash);
     }
 
